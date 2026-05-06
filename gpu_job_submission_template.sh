@@ -38,9 +38,9 @@
 # <TYPE> is the specific kind of GPU you're looking to request. If you wish to know what GPUs are available on the cluster,
 # you can use the command below to scope out all the available configurations. Examples include v100, a100, l40s, etc.
 # This type is required for any GPU job, so please make sure you set it correctly.
-# 
+#
 # sinfo -o "%P %G"
-# 
+#
 # <COUNT> is the number of that type of GPU you need. Note that without parallelization, requesting more than one GPU
 # will not use more than one. Parallelization is also required for requesting more GPUs than available on a single node.
 # Thus, you should almost always put a "1" for this section of the command, unless you're certain your code can take advantage.
@@ -51,7 +51,7 @@
 # SLURM often conflates the terms 'cpu' and 'core', so keep that in mind as you adjust these settings.
 # In order to improve the overall efficiency of the system and allow all researchers access to their necessary resources,
 # we suggest that you request fewer than an entire node's worth of cores, unless your jobs require a high core count.
-# Different GPU nodes have different total core counts, so check using "scontrol show node [nodename]" for particulars. 
+# Different GPU nodes have different total core counts, so check using "scontrol show node [nodename]" for particulars.
 # If unspecified, you will be given 4 cores total.
 #SBATCH --cpus-per-gpu=4
 
@@ -90,10 +90,10 @@
 # Please replace [filepath] with the location of your Python file, either relative to the current directory or absolute.
 # For other modules, use the command "module avail" to see a full list of modules. Add a new line below after the load
 # instruction stating "module load [name of desired module]" to have access to that module in the code you wish to run.
-module load python3
-python3 /home/andreferraz/distributedLLM/train.py --dataset_path /home/andreferraz/wikitext_tensors.pt
+module load pixi-pytorch-gpu
+python3 /home/andreferraz/distributedLLM/train.py --dataset_path /home/andreferraz/wikitext_tensors.pt --model-path /home/andreferraz/distributedLLM/checkpoints/model.pt
 
-# Once you're happy with everything here, save it in nano (CRTL+O), exit nano (CRTL+X), and submit it 
+# Once you're happy with everything here, save it in nano (CRTL+O), exit nano (CRTL+X), and submit it
 # using the command "sbatch [filename].sh".
 # If you haven't changed the filename, it would be "sbatch job_submit_template.sh".
 
