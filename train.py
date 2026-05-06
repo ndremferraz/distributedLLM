@@ -28,6 +28,9 @@ MIN_LR = 6e-5
 BATCH_SIZE = 4
 EVAL_INTERVAL = 1500 
 
+
+#TODO Implement learning rate decay schedule 
+
 def get_batch(x: torch.Tensor, y: torch.Tensor, batch_size: int, iter: int):
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
