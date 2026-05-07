@@ -23,7 +23,6 @@
 #SBATCH --mem-per-gpu=16G
 
 # Output and error logs.
-#SBATCH --output=ddp-%j.out
 #SBATCH --error=ddp-%j.err
 
 # Email notifications.

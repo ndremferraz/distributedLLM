@@ -269,7 +269,7 @@ class Trainer:
             valid_loss = None
 
             if step % EVAL_INTERVAL == 0 or step == self.total_iterations:
-                
+
                 valid_loss = self._run_validation()
 
                 if self.is_main_process:
@@ -378,7 +378,7 @@ def main():
     if trainer.is_main_process:
         print(args)
         print(model)
-        print(f"Model moved to {device} with parameters of type: {next(unwrap_model(trainer.model).parameters()).dtype}")
+        print(f"Model moved to {device} with parameters of type: {next(trainer.model.module.parameters()).dtype}")
         print(f"Optimizer initialized with learning rate {LEARNING_RATE}")
         print(f"Model parameters: total={total_params:,}, trainable={trainable_params:,}")
         print(f"Train set shape: x={x_train.shape}, y={y_train.shape}")
