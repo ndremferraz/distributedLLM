@@ -291,6 +291,7 @@ class Trainer:
             )
 
     def _save_training_state(self) -> None:
+        # FSDP state-dict collection uses collectives, so every rank must participate.
         save_checkpoint(
             model=self.model,
             optimizer=self.optimizer,
@@ -384,18 +385,19 @@ class Trainer:
                     self.valid_losses.append(valid_loss)
                     if valid_loss < self.best_valid_loss:
                         self.best_valid_loss = valid_loss
-                    self._save_training_state()
+                self._save_training_state()
 
-                    self.train_losses.append(train_loss)
-                    append_metrics_row(
-                        metrics_path=self.metrics_path,
-                        iteration=step,
-                        total_iterations=self.total_iterations,
-                        train_loss=train_loss,
-                        valid_loss=valid_loss,
-                        batch_time_seconds=batch_time_seconds,
-                        learning_rate=current_learning_rate,
-                    )
+            if self.is_main_process:
+                self.train_losses.append(train_loss)
+                append_metrics_row(
+                    metrics_path=self.metrics_path,
+                    iteration=step,
+                    total_iterations=self.total_iterations,
+                    train_loss=train_loss,
+                    valid_loss=valid_loss,
+                    batch_time_seconds=batch_time_seconds,
+                    learning_rate=current_learning_rate,
+                )
 
         dist.barrier()
 
