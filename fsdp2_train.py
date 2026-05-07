@@ -42,7 +42,7 @@ LR_STEP_GAMMA = 0.5
 
 TRAIN_SEED = 1337
 BATCH_SIZE = 32
-VALID_BATCH_SIZE = BATCH_SIZE * 8
+VALID_BATCH_SIZE = BATCH_SIZE
 EVAL_INTERVAL = 1500
 
 
@@ -321,6 +321,7 @@ class Trainer:
 
     @torch.no_grad()
     def _run_validation(self) -> float:
+        self.optimizer.zero_grad(set_to_none=True)
         self.model.eval()
 
         loss_totals = torch.zeros(2, device=self.device)
@@ -365,25 +366,29 @@ class Trainer:
             train_loss, batch_time_seconds, current_learning_rate = self._run_batch(source, targets)
             self.completed_steps = step
 
-            if step % EVAL_INTERVAL == 0 or step == self.total_iterations:
+            valid_loss = None
+            should_validate = step % EVAL_INTERVAL == 0 or step == self.total_iterations
+
+            if should_validate:
                 valid_loss = self._run_validation()
 
                 if self.is_main_process:
-                    self.train_losses.append(train_loss)
                     self.valid_losses.append(valid_loss)
                     if valid_loss < self.best_valid_loss:
                         self.best_valid_loss = valid_loss
                     self._save_training_state()
 
-                    append_metrics_row(
-                        metrics_path=self.metrics_path,
-                        iteration=step,
-                        total_iterations=self.total_iterations,
-                        train_loss=train_loss,
-                        valid_loss=valid_loss,
-                        batch_time_seconds=batch_time_seconds,
-                        learning_rate=current_learning_rate,
-                    )
+            if self.is_main_process:
+                self.train_losses.append(train_loss)
+                append_metrics_row(
+                    metrics_path=self.metrics_path,
+                    iteration=step,
+                    total_iterations=self.total_iterations,
+                    train_loss=train_loss,
+                    valid_loss=valid_loss,
+                    batch_time_seconds=batch_time_seconds,
+                    learning_rate=current_learning_rate,
+                )
 
         dist.barrier()
 

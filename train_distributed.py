@@ -34,7 +34,7 @@ LR_STEP_DIVISOR = 5
 LR_STEP_GAMMA = 0.5
 
 BATCH_SIZE = 32
-VALID_BATCH_SIZE = BATCH_SIZE * 8
+VALID_BATCH_SIZE = BATCH_SIZE
 EVAL_INTERVAL = 1500
 
 def save_checkpoint(
@@ -110,7 +110,7 @@ def append_metrics_row(
                 iteration,
                 total_iterations,
                 train_loss,
-                valid_loss,
+                valid_loss if valid_loss is not None else "",
                 batch_time_seconds,
                 learning_rate,
             ]
@@ -222,6 +222,7 @@ class Trainer:
 
     @torch.no_grad()
     def _run_validation(self) -> float:
+        self.optimizer.zero_grad(set_to_none=True)
         self.model.eval()
 
         loss_totals = torch.zeros(2, device=self.device)
@@ -267,29 +268,29 @@ class Trainer:
             self.completed_steps = step
 
             valid_loss = None
+            should_validate = step % EVAL_INTERVAL == 0 or step == self.total_iterations
 
-            if step % EVAL_INTERVAL == 0 or step == self.total_iterations:
-
+            if should_validate:
                 valid_loss = self._run_validation()
 
-                if self.is_main_process:
-                    self.train_losses.append(train_loss)
+            if self.is_main_process:
+                self.train_losses.append(train_loss)
 
-                    if valid_loss is not None:
-                        self.valid_losses.append(valid_loss)
-                        if valid_loss < self.best_valid_loss:
-                            self.best_valid_loss = valid_loss
-                        self._save_training_state()
+                if valid_loss is not None:
+                    self.valid_losses.append(valid_loss)
+                    if valid_loss < self.best_valid_loss:
+                        self.best_valid_loss = valid_loss
+                    self._save_training_state()
 
-                    append_metrics_row(
-                        metrics_path=self.metrics_path,
-                        iteration=step,
-                        total_iterations=self.total_iterations,
-                        train_loss=train_loss,
-                        valid_loss=valid_loss,
-                        batch_time_seconds=batch_time_seconds,
-                        learning_rate=current_learning_rate,
-                    )
+                append_metrics_row(
+                    metrics_path=self.metrics_path,
+                    iteration=step,
+                    total_iterations=self.total_iterations,
+                    train_loss=train_loss,
+                    valid_loss=valid_loss,
+                    batch_time_seconds=batch_time_seconds,
+                    learning_rate=current_learning_rate,
+                )
 
         dist.barrier()
 
