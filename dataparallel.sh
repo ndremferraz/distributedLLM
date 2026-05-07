@@ -34,20 +34,20 @@ module load pixi-pytorch-gpu
 
 nodes=( $(scontrol show hostnames "$SLURM_JOB_NODELIST") )
 head_node="${nodes[0]}"
-head_node_ip=$(srun --nodes=1 --ntasks=1 -w "$head_node" hostname --ip-address)
 
 echo "Head node: $head_node"
-echo "Head node IP: $head_node_ip"
 echo "Allocated nodes: ${nodes[*]}"
 
 export LOGLEVEL=INFO
+export NCCL_SOCKET_FAMILY=AF_INET
+export NCCL_DEBUG=INFO
 
 srun torchrun \
     --nnodes "$SLURM_NNODES" \
     --nproc_per_node 1 \
     --rdzv_id "$SLURM_JOB_ID" \
     --rdzv_backend c10d \
-    --rdzv_endpoint "$head_node_ip:29500" \
+    --rdzv_endpoint "$head_node:29500" \
     /home/andreferraz/distributedLLM/train_distributed.py \
     --dataset_path /home/andreferraz/wikitext_tensors.pt \
     --model_path /home/andreferraz/distributedLLM/checkpoint/model.pt \
