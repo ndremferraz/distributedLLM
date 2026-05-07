@@ -22,7 +22,7 @@ def get_args():
     parser.add_argument(
         "--model-path",
         type=str,
-        default="checkpoint/model.pt",
+        default="/home/andreferraz/distributedLLM/checkpoint/model.pt",
         help="Path to a saved model checkpoint.",
     )
     parser.add_argument(
