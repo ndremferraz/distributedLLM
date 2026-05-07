@@ -23,6 +23,7 @@
 #SBATCH --mem-per-gpu=16G
 
 # Output and error logs.
+#SBATCH --output=ddp-%j.out
 #SBATCH --error=ddp-%j.err
 
 # Email notifications.
@@ -40,6 +41,7 @@ echo "Allocated nodes: ${nodes[*]}"
 export LOGLEVEL=INFO
 export NCCL_SOCKET_FAMILY=AF_INET
 export NCCL_DEBUG=INFO
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 srun torchrun \
     --nnodes "$SLURM_NNODES" \

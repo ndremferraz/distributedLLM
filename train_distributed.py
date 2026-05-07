@@ -34,7 +34,7 @@ LR_STEP_DIVISOR = 5
 LR_STEP_GAMMA = 0.5
 
 BATCH_SIZE = 32
-VALID_BATCH_SIZE = BATCH_SIZE
+VALID_BATCH_SIZE = max(1, BATCH_SIZE // 4)
 EVAL_INTERVAL = 1500
 
 def save_checkpoint(
@@ -92,6 +92,7 @@ def initialize_metrics_file(metrics_path: str, append: bool) -> None:
                 ]
             )
             file.flush()
+            os.fsync(file.fileno())
 
 
 def append_metrics_row(
@@ -103,7 +104,10 @@ def append_metrics_row(
     batch_time_seconds: float,
     learning_rate: float,
 ) -> None:
-    with Path(metrics_path).open("a", newline="") as file:
+    metrics_file = Path(metrics_path)
+    metrics_file.parent.mkdir(parents=True, exist_ok=True)
+
+    with metrics_file.open("a", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(
             [
@@ -116,6 +120,7 @@ def append_metrics_row(
             ]
         )
         file.flush()
+        os.fsync(file.fileno())
 
 
 class Trainer:
@@ -223,6 +228,7 @@ class Trainer:
     @torch.no_grad()
     def _run_validation(self) -> float:
         self.optimizer.zero_grad(set_to_none=True)
+        torch.cuda.empty_cache()
         self.model.eval()
 
         loss_totals = torch.zeros(2, device=self.device)
@@ -233,9 +239,11 @@ class Trainer:
             _, loss = self.model(source, targets)
             loss_totals[0] += loss.detach()
             loss_totals[1] += 1
+            del source, targets, loss
 
         dist.all_reduce(loss_totals, op=dist.ReduceOp.SUM)
         self.model.train()
+        torch.cuda.empty_cache()
 
         if loss_totals[1].item() == 0:
             return float("inf")
@@ -384,6 +392,10 @@ def main():
         print(f"Model parameters: total={total_params:,}, trainable={trainable_params:,}")
         print(f"Train set shape: x={x_train.shape}, y={y_train.shape}")
         print(f"Validation set shape: x={x_valid.shape}, y={y_valid.shape}")
+        print(
+            f"Per-rank batch sizes: train={BATCH_SIZE}, validation={VALID_BATCH_SIZE}, "
+            f"eval_interval={EVAL_INTERVAL}"
+        )
         print(
             f"Using StepLR with step_size={lr_step_size} iterations "
             f"(computed as total_iterations // LR_STEP_DIVISOR = {iterations} // {LR_STEP_DIVISOR}) "
