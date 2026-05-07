@@ -35,7 +35,7 @@ LR_STEP_GAMMA = 0.5
 
 BATCH_SIZE = 32
 VALID_BATCH_SIZE = max(1, BATCH_SIZE // 4)
-EVAL_INTERVAL = 1500
+EVAL_INTERVAL = 100
 
 def save_checkpoint(
     model: nn.Module,

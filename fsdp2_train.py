@@ -43,7 +43,7 @@ LR_STEP_GAMMA = 0.5
 TRAIN_SEED = 1337
 BATCH_SIZE = 32
 VALID_BATCH_SIZE = max(1, BATCH_SIZE // 4)
-EVAL_INTERVAL = 1500
+EVAL_INTERVAL = 100
 
 
 def save_checkpoint(
@@ -386,17 +386,16 @@ class Trainer:
                         self.best_valid_loss = valid_loss
                     self._save_training_state()
 
-            if self.is_main_process:
-                self.train_losses.append(train_loss)
-                append_metrics_row(
-                    metrics_path=self.metrics_path,
-                    iteration=step,
-                    total_iterations=self.total_iterations,
-                    train_loss=train_loss,
-                    valid_loss=valid_loss,
-                    batch_time_seconds=batch_time_seconds,
-                    learning_rate=current_learning_rate,
-                )
+                    self.train_losses.append(train_loss)
+                    append_metrics_row(
+                        metrics_path=self.metrics_path,
+                        iteration=step,
+                        total_iterations=self.total_iterations,
+                        train_loss=train_loss,
+                        valid_loss=valid_loss,
+                        batch_time_seconds=batch_time_seconds,
+                        learning_rate=current_learning_rate,
+                    )
 
         dist.barrier()
 
