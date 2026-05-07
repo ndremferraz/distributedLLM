@@ -11,16 +11,16 @@
 # Cerberus partition / queue.
 #SBATCH --partition=workshop
 
+#SBATCH --gres=gpu:v100:1
+
 # Multi-node DDP resource request.
 # Keep --nodes, --ntasks, and torchrun --nnodes aligned.
 # This version runs 1 training process per node and 1 GPU per process.
 #SBATCH --job-name=multinode-gpt-ddp
 #SBATCH --nodes=4
-#SBATCH --ntasks=4
-#SBATCH --gpus-per-task=1
-#SBATCH --cpus-per-task=4
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-gpu=4
 #SBATCH --mem-per-gpu=16G
-#SBATCH --gres=gpu:v100:1
 
 # Output and error logs.
 #SBATCH --output=ddp-%j.out
